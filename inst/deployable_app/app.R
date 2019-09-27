@@ -8,9 +8,9 @@ library(genogeographer)
 #' on a spreadsheet data containing the necessary columns and information. 
 #' Below, we use these data to construct the required object (Note the naming can be arbritary):
 
-load("RGA_db.RData")
-db_list <- list("All 164 AIMs" = KK164, "Seldin (123 AIMs)" = KK164_seldin, "Kidd (55 SNPs)" = KK164_kidd)
-reporting_panel <- FALSE
+## load("REFERENCE_DATA_BASE.RData") ## ASSUMES TO LOAD DB_1, DB_2 and DB_3
+db_list <- list("DB 1" = DB_1, "DB 2" = DB_2, "DB 3" = DB_3) ## "Long name to appear in drop-out" = DB
+reporting_panel <- TRUE ## FALSE
 
 shinyApp(
   ui = genogeographer:::ui_fct(),

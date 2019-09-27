@@ -4,8 +4,8 @@
 \alias{random_AIMs_profile}
 \title{Simulate a random AIMs profile}
 \usage{
-random_AIMs_profile(df, grouping = "pop", population = NULL, n = FALSE,
-  keep_pop = FALSE)
+random_AIMs_profile(df, grouping = "pop", population = NULL,
+  n = FALSE, keep_pop = FALSE)
 }
 \arguments{
 \item{df}{Database of reference profiles as returned by \code{pops_to_DB}}

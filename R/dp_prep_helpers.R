@@ -162,26 +162,29 @@ pops_to_DB <- function(db, ...){
   dd_pop <- score_add_df(db, ...)
   if("meta" %in% names(dd_pop)){
   meta_hulls <- convex_hulls(dd_pop) %>% 
-    select(meta, lat, lon , n_row) %>% group_by(meta) %>% nest(.key = "hulls_meta")
+    select(meta, lat, lon , n_row) %>% nest(hulls_meta = -c(meta)) %>% group_by(meta)
+  browser()
   dd_meta <- score_add_df(db = dd_pop, grouping = "meta") %>% 
     inner_join(meta_hulls, by = "meta") %>% 
-    group_by(meta) %>% 
-    nest(.key = "meta_data")
+    nest(meta_data = -c(meta)) %>% 
+    group_by(meta)
   dd <- inner_join(
-    dd_pop %>% group_by(pop, population, meta, metapopulation) %>% nest(.key = "population_data"),
+    dd_pop %>% nest(population_data = -c(pop, population, meta, metapopulation)) %>% 
+      group_by(pop, population, meta, metapopulation),
     dd_meta, 
     by = "meta")
   }
-  else dd <- dd_pop %>% group_by(pop, population) %>% nest(.key = "population_data")
+  else dd <- dd_pop %>% nest(population_data = -c(pop, population)) %>% group_by(pop, population)
   if("cluster" %in% names(db)){
     cluster_hulls <- convex_hulls(dd_pop, grouping = "cluster") %>% 
-      select(cluster, lat, lon , n_row) %>% group_by(cluster) %>% nest(.key = "hulls_cluster")
+      select(cluster, lat, lon , n_row) %>% nest(hulls_cluster = -c(cluster)) %>% group_by(cluster)
     dd_cluster <- score_add_df(db = dd_pop, grouping = "cluster") %>% 
       inner_join(cluster_hulls, by = "cluster") %>% 
-      group_by(cluster) %>% 
-      nest(.key = "cluster_data")
+      nest(cluster_data = -c(cluster)) %>% 
+      group_by(cluster)
     dd <- inner_join(
-      dd_pop %>% group_by(pop, population, meta, metapopulation, cluster) %>% nest(.key = "population_data"),
+      dd_pop %>% nest(population_data = -c(pop, population, meta, metapopulation, cluster)) %>% 
+        group_by(pop, population, meta, metapopulation, cluster),
       dd_meta, by = "meta") %>% 
       inner_join(dd_cluster, by = "cluster")
   }

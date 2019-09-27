@@ -5,7 +5,7 @@
 \title{Compute pairwise likelihood ratios}
 \usage{
 LR_table(result_df, lr_populations = NULL, only_accepted = TRUE,
-  CI = 0.95, digits = NULL)
+  CI = 0.95, digits = NULL, keep_logP = FALSE)
 }
 \arguments{
 \item{result_df}{The output from \code{genogeo}}
@@ -17,6 +17,8 @@ LR_table(result_df, lr_populations = NULL, only_accepted = TRUE,
 \item{CI}{The level of confidence interval to be computed}
 
 \item{digits}{If rounding of the output should be performed.}
+
+\item{keep_logP}{Logical. Should the logP's be returned in output}
 }
 \value{
 A tibble with numerator and denominator populations with their log10 LR and uncertainty.

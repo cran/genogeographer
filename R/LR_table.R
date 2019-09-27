@@ -9,6 +9,7 @@
 #' @param only_accepted Restrict the ratios to include minimum one accepted population.
 #' @param CI The level of confidence interval to be computed
 #' @param digits If rounding of the output should be performed.
+#' @param keep_logP Logical. Should the logP's be returned in output
 #' @author Torben Tvedebrink \email{tvede@@math.aau.dk}
 #' @return A tibble with numerator and denominator populations with their log10 LR and uncertainty.
 #' @export
@@ -20,7 +21,7 @@
 #' result <- genogeo(profile[,c("locus","x0")], df = df_db)
 #' LR_table(result)
 
-LR_table <- function(result_df, lr_populations = NULL, only_accepted = TRUE, CI = 0.95, digits = NULL){
+LR_table <- function(result_df, lr_populations = NULL, only_accepted = TRUE, CI = 0.95, digits = NULL, keep_logP = FALSE){
   ## build fixes : start ##
   meta <- NULL
   pop <- NULL
@@ -38,6 +39,10 @@ LR_table <- function(result_df, lr_populations = NULL, only_accepted = TRUE, CI 
   CI_upr <- NULL
   null_in_CI <- NULL
   . <- NULL
+  num_z_score <- NULL
+  num_accept <- NULL
+  den_z_score <- NULL
+  den_accept <- NULL
   ## build fixes : end ##
   z <- qnorm((1-CI)/2, lower.tail = FALSE)
   z_ <- qnorm(CI, lower.tail = TRUE)
@@ -61,15 +66,22 @@ LR_table <- function(result_df, lr_populations = NULL, only_accepted = TRUE, CI 
            var_logLR = varlogP + den_varlogP,
            CI_lwr = logLR - z*sqrt(var_logLR),
            CI_upr = logLR + z*sqrt(var_logLR))
+  lr_list <- lr_list %>% 
+    mutate(num_accept = p_value > (1-CI),
+           num_z_score = z_score,
+           den_accept = den_p_value > (1-CI),
+           den_z_score = den_z_score)
   if(only_accepted){
-    lr_list <- lr_list %>% filter(p_value > (1-CI) | den_p_value > (1-CI))
+    lr_list <- lr_list %>% filter(num_accept | den_accept)
   }
   if(!is.null(digits)){
     lr_list <- lr_list %>% mutate_if(is.double, funs(round(., digits = digits)))
   }
   lr_list <- lr_list %>%
     arrange(pop, den_pop) %>%
-    mutate_if(is.factor, .funs = paste) %>% 
-    select(numerator = pop, denominator = den_pop,logLR:CI_upr)
+    mutate_if(is.factor, .funs = paste)
+  if(keep_logP) lr_list <- lr_list %>% select(numerator = pop, denominator = den_pop,logLR:CI_upr, 
+                                              num_logP = logP, den_logP, num_accept, num_z_score, den_accept, den_z_score)
+  else lr_list <- lr_list %>% select(numerator = pop, denominator = den_pop,logLR:CI_upr)
   lr_list %>% mutate(null_in_CI = sign(CI_lwr) != sign(CI_upr))
 }

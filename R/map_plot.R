@@ -39,18 +39,22 @@ map_pop_plot <- function(data){
   data <- data %>% mutate(selected_ = ifelse(selected_, "Yes", "No"))
   maplot <- ggplot(data, ### Points
                    aes(x=lon, y = lat, group = labs, size = n, fill = labs, colour = selected_, shape = LR_listing))
+  world_map <- maps::map("world", ".", exact = FALSE, plot = FALSE, fill = TRUE) %>% fortify()
+  ## world_map <- map_data("world")
   maplot <- maplot +
-    geom_polygon(data = map_data("world") %>% rename(lon = long), ### World map
+    geom_polygon(data = world_map %>% rename(lon = long), ### World map
                  aes(group=group, size = NULL, colour=NULL, shape = NULL),
-                 colour="gray80",fill="gray90", show.legend = FALSE) +
-    labs(x="Longitude",y="Latitude") +
-    guides(fill=FALSE, alpha=FALSE, stroke=FALSE) +
+                 colour="gray80",fill="gray90", show.legend = FALSE)
+  maplot <- maplot + labs(x="Longitude",y="Latitude") +
+    guides(fill=FALSE, alpha=FALSE, stroke=FALSE, shape = FALSE, colour = FALSE, size = FALSE) +
     scale_fill_manual(values = bar_colour(data[,c("logP","accept","labs")])) +
     scale_shape_manual("In LR list", values = c("No" = 21, "Yes" = 24)) + 
     scale_colour_manual("Brushed points", values = c("No" = "#000000", "Yes" = "#FFDE00"))
-  if(nrow(data %>% distinct(LR_listing))==1) maplot <- maplot + guides(shape = FALSE)
-  if(nrow(data %>% distinct(selected_))==1) maplot <- maplot + guides(colour=FALSE)
-  maplot + geom_point()
+  # if(nrow(data %>% distinct(LR_listing))==1) maplot <- maplot + guides(shape = FALSE)
+  # if(nrow(data %>% distinct(selected_))==1) maplot <- maplot + guides(colour=FALSE)
+  maplot <- maplot + geom_point()
+  ## list(plot = maplot)
+  maplot
 }
 
 map_meta_plot <- function(data){ ## data is assumed to be KK164 - for non-meta it is result
@@ -72,22 +76,26 @@ map_meta_plot <- function(data){ ## data is assumed to be KK164 - for non-meta i
   ## Compute convex hulls for meta populations
   meta_cols <- bar_colour(data[,c("logP", "accept", "meta")])
   meta_plot <- ggplot(data, 
-                      aes(x=lon, y = lat, size = log(n), fill = meta, colour = meta, shape = LR_listing)) + 
-    ## Adding the map
-    geom_polygon(data=map_data("world"), ### World map
-                 aes(group=group, x = long, size = NULL, fill = NULL, colour = NULL, shape = NULL), 
-                 colour="gray80",fill="gray90", show.legend = FALSE)
-  meta_plot <- meta_plot + 
+                      aes(x=lon, y = lat, fill = meta, colour = meta, shape = LR_listing))
+  ## Adding the map
+  world_map <- maps::map("world", ".", exact = FALSE, plot = FALSE, fill = TRUE) %>% fortify()
+  ## world_map <- map_data("world")
+  meta_plot <- meta_plot + geom_polygon(data=world_map %>% rename(lon = long), ### World map
+                                        aes(group=group, size = NULL, fill = NULL, colour = NULL, shape = NULL),
+                                        colour="gray80",fill="gray90", show.legend = FALSE)
+  meta_plot <- meta_plot + labs(x="Longitude",y="Latitude") +
     ## Adding the convex hull and corners
     geom_polygon(data = data %>% unnest(hulls_meta, .sep = "_"), 
-                 aes(size = NULL, x = hulls_meta_lon, y = hulls_meta_lat, shape = NULL), 
+                 aes(x = hulls_meta_lon, y = hulls_meta_lat, shape = NULL), 
                  show.legend = FALSE, alpha = 0.75, size = 1.25) + 
     ## scale_colour_brewer(palette = "YlGn") +
     scale_colour_manual(values = meta_cols) + 
     scale_shape_manual("In LR list", values = c("No" = 21, "Yes" = 24)) + 
-    scale_fill_manual(values = meta_cols) + guides(fill = FALSE, colour = FALSE)
-  if(nrow(data %>% distinct(LR_listing))==1) meta_plot <- meta_plot + guides(shape = FALSE)
-  meta_plot + geom_point(aes(size = NULL, colour = NULL), size = 2, stroke = 1, colour = "black")
+    scale_fill_manual(values = meta_cols) + guides(fill = FALSE, colour = FALSE, shape = FALSE)
+  ## if(nrow(data %>% distinct(LR_listing))==1) meta_plot <- meta_plot + guides(shape = FALSE)
+  meta_plot <- meta_plot + geom_point(aes(colour = NULL), size = 2, stroke = 1, colour = "black")
+##  list(plot = meta_plot, rr = rr)
+  meta_plot
 }
 
 convex_hulls <- function(db, grouping = "meta"){

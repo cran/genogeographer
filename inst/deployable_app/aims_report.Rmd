@@ -5,10 +5,8 @@ output:
     toc: true
   pdf_document:
     toc: true
-    classoption: landscape
   word_document:
     toc: true
-    classoption: landscape
 params:
   set_file: "file_name"
   set_author: "author_name"
@@ -23,13 +21,20 @@ date: `r format(Sys.time(), "%a %b %d %X %Y")`
 # File: `r params$set_file`
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, comment = NA, message = FALSE, warning = FALSE, fig.width = 11, fig.asp = 0.8)
+knitr::opts_chunk$set(echo = FALSE, comment = NA, message = FALSE, warning = FALSE, fig.width = 11, fig.asp = 0.8, error = TRUE, fig.align = 'center')
 library(knitr)
-library(tidyverse)
+## library(kableExtra)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(tibble)
+library(purrr)
+library(forcats)
 theme_set(theme_bw(base_size = 14))
 ```
 
-```{r result, include=FALSE}
+```{r result}
 res <- result()
 ```
 
@@ -50,7 +55,7 @@ res_ <- res$meta
 if(is.null(input[[paste0("lr_", input$meta)]])) res_ <- res_ %>% mutate(LR_listing = "No")
 if(!is.null(input[[paste0("lr_", input$meta)]])) 
   res_ <- res_ %>% mutate(LR_listing = ifelse(.[[1]] %in% input[[paste0("lr_",input$meta)]], "Yes", "No"))
-res_ <- subset(res_, !(is.na(lat) | is.na(lon))) ## Discard pops with no location
+res_ <- filter(res_, !(is.na(lat) | is.na(lon))) ## Discard pops with no location
 map_plot(res_)
 ```
 
@@ -64,7 +69,7 @@ result_table(res$meta, flat = (params$set_output != "HTML"))
 
 ```{r meta_lr}
 accepted_ <- if(is.null(input$LR_accept)) FALSE else (input$tilt == "allow")
-LR_list(result = res$meta, lr_pops = input$lr_meta, CI = input$CI, accepted = accepted_, flat = (params$set_output != "HTML"))
+LR_list(result = res$meta, lr_pops = input$lr_meta, CI = input$CI/100, accepted = accepted_, flat = (params$set_output != "HTML"))
 ```
 
 ## Populations
@@ -80,7 +85,7 @@ res_ <- res$pop
 if(is.null(input[[paste0("lr_", input$meta)]])) res_ <- res_ %>% mutate(LR_listing = "No")
 if(!is.null(input[[paste0("lr_", input$meta)]])) 
   res_ <- res_ %>% mutate(LR_listing = ifelse(.[[1]] %in% input[[paste0("lr_",input$meta)]], "Yes", "No"))
-res_ <- subset(res_, !(is.na(lat) | is.na(lon))) ## Discard pops with no location
+res_ <- filter(res_, !(is.na(lat) | is.na(lon))) ## Discard pops with no location
 map_plot(res_)
 ```
 
@@ -93,14 +98,14 @@ result_table(res$pop, flat = (params$set_output != "HTML"))
 ### Likelihood ratios
 
 ```{r pop_lr}
-LR_list(result = res$pop, lr_pops = input$lr_pop, CI = input$CI, accepted = accepted_, flat = (params$set_output != "HTML"))
+LR_list(result = res$pop, lr_pops = input$lr_pop, CI = input$CI/100, accepted = accepted_, flat = (params$set_output != "HTML"))
 ```
 
 ## Appendix
 
 ### Uploaded profile
-```{r profile}
-profile <- Dataset() %>% mutate(genotype = paste0(A1, A2)) %>% 
+```{r profile, results='asis'}
+profile <- Profile() %>% mutate(genotype = paste0(A1, A2)) %>% 
   select(locus, genotype)
 if(params$set_output == "HTML") profile %>% DT::datatable()
 if(params$set_output != "HTML") profile %>% kable()

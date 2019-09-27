@@ -32,6 +32,7 @@ scores_pop <- function(profile, CI=0.95, tilt = FALSE, tilt_interval = c(0.001, 
     if(nrow(AIMs_result_tilt) == 0){ return(AIMs_result) }## break out of tilting
     profile_tilt <- semi_join(profile, AIMs_result_tilt, by = group_vars(profile)) %>% 
       group_by_(.dots = group_vars(profile)) %>% nest(.key = "data")
+    ## if(brow) browser()
     AIMs_result_tilt <- profile_tilt %>% rowwise() %>% 
       mutate(p_value_tilt = with(data, exponent_tilt(x0 = x0, x1 = x1, n = n, B = tilt_n, p_limit = tilt_interval[2]))) %>% 
       select(-data)

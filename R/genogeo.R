@@ -12,12 +12,16 @@ shiny_result <- function(profile, df, CI = 0.95, min_n = 75, grouping = "pop", s
   ## build fixes : end ##
   grouping <- match.arg(grouping, c("pop", "meta", "cluster"))
   if(!(grouping %in% names(df))) return(NULL)
+  grouping_ <- quo(!!sym(grouping))
   ##
-  df_meta <- df %>% select(which(purrr::map_chr(df, class) != "list"))
+  df_meta <- df %>% select(-ends_with("data")) %>% select(starts_with(grouping)) %>% distinct()
   df <- df %>% select(starts_with(grouping))
-  non_list_cols <- which(purrr::map_chr(df, class) != "list")
-  df <- df %>% distinct_(names(.)[non_list_cols], .keep_all = TRUE) %>% unnest()
-  group_vars <- grep(paste0("^",grouping), names(df), value = TRUE)
+  # non_list_cols <- which(purrr::map_chr(df, class) != "list")
+  ## char_class <- function(x) class(x)[1] == "character"
+  ## non_list_cols <- which(purrr::map_lgl(df, char_class))
+  df <- df %>% group_by(!!grouping_) %>% slice(1) %>% ungroup() %>% unnest(cols = ends_with("data"))
+  group_vars <- grep(paste0("^",grouping), names(df_meta), value = TRUE)
+  ## browser()
   ## If profile is simulated it contains X0 - if not, remoove X0 and X1 from reference
   join_by <- c("locus", "x0")
   if("X0" %in% names(profile)) join_by <- c(join_by, "X0")
@@ -37,8 +41,8 @@ shiny_result <- function(profile, df, CI = 0.95, min_n = 75, grouping = "pop", s
   scores <- scores %>% ungroup() %>% 
     mutate(
       accept = (p_value > (1-CI)),
-      n_obs = n/2, 
-      labs = paste0(.[[1]]," (",n_obs,")"),
+      n = n/2, 
+      labs = paste0(.[[1]]," (",n,")"),
       labs = fct_reorder(labs, logP)
     ) %>% 
     arrange(z_score)

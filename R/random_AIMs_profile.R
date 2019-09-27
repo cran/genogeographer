@@ -15,9 +15,11 @@ rand_profile <- function(df, grouping = "pop", population = NULL, n = FALSE, kee
   ## build fixes : end ##
   stopifnot(length(population) <= 1)
   grouping <- match.arg(grouping, c("pop", "meta"))
+  grouping_ <- quo(!!sym(grouping))
   ## 
   df <- df %>% select(starts_with(grouping)) %>% 
-    distinct_(names(.)[1], .keep_all = TRUE) %>% unnest()
+    distinct(!!grouping_, .keep_all = TRUE) %>% unnest(cols = ends_with("data")) %>% 
+    ungroup()
   if(grouping == "meta") df <- df %>% rename(pop = meta)
   ## 
   if(!is.null(population)){
